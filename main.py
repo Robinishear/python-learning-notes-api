@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -37,6 +38,13 @@ notes = [
     },
 ]
 
+class Note(BaseModel):
+    term: str
+    definition: str
+    js_equivalent: str | None = None
+    tags: list[str] = []
+    learned: bool = False
+
 @app.get("/")
 def root():
     return {
@@ -45,11 +53,13 @@ def root():
     }
 
 @app.get("/terms")
-def get_terms(tag: str | None = None):
+def get_terms(tag: str | None = None, q: str | None = None):
     result = []
 
     for note in notes:
         if tag and tag not in note["tags"]:
+            continue
+        if q and q.lower() not in note["term"].lower():
             continue
 
         result.append(note)
@@ -63,3 +73,11 @@ def get_term(term_id: int):
         if note["id"] == term_id:
             return note
     return {"message": "Term Not Found"}
+
+
+@app.post("/terms", status_code=201)
+def add_term(note: Note):
+    new_note = {"id": len(notes) + 1}
+    new_note.update(note.model_dump())
+    notes.append(new_note)
+    return new_note
