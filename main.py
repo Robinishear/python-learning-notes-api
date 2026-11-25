@@ -78,6 +78,7 @@ def get_term(term_id: int):
 @app.post("/terms", status_code=201)
 def add_term(note: Note):
     new_note = {"id": len(notes) + 1}
+    
     new_note.update(note.model_dump())
     notes.append(new_note)
     return new_note
